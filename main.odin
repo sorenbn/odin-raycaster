@@ -20,8 +20,10 @@ wall :: struct {
 	end:   rl.Vector2,
 }
 
-rays: [360]ray
 walls: [10]wall
+rays: [dynamic]ray
+verticies: [dynamic]rl.Vector2
+triangles: [dynamic]i32
 
 main :: proc() {
 
@@ -34,16 +36,21 @@ main :: proc() {
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.Color{25, 25, 25, 255})
 
-		light_start := rl.GetMousePosition()
+		clear(&rays)
+		clear(&verticies)
+		clear(&triangles)
 
-		for i := 0; i < 360; i += 1 {
+		light_start := rl.GetMousePosition()
+		append(&verticies, light_start)
+
+		for i := 0; i < 90; i += 5 {
 			ray: ray = {
 				start  = light_start,
 				dir    = angle_to_direction(f32(i)),
 				length = RAY_LENGTH,
 			}
 
-			rays[i] = ray
+			append(&rays, ray)
 		}
 
 		for ray in rays {
@@ -72,9 +79,10 @@ main :: proc() {
 			}
 
 			if found_collision {
+				append(&verticies, closest_collision_point)
 				rl.DrawLineV(ray.start, closest_collision_point, rl.WHITE)
-				// rl.DrawCircleV(closest_collision_point, 5.0, rl.RED)
 			} else {
+				append(&verticies, ray.start + ray.dir * ray.length)
 				rl.DrawLineV(ray.start, ray.start + ray.dir * ray.length, rl.WHITE)
 			}
 		}
@@ -82,6 +90,29 @@ main :: proc() {
 		for w in walls {
 			rl.DrawLineEx(w.start, w.end, WALL_THICKNESS, rl.BLUE)
 		}
+
+		for &v in verticies {
+			rl.DrawCircleV(v, 5.0, rl.RED)
+		}
+
+		append(&triangles, 0, 2, 1)
+		append(&triangles, 0, 3, 2)
+
+		for i := 0; i < len(triangles); i += 3 {
+			a := triangles[i]
+			b := triangles[i + 1]
+			c := triangles[i + 2]
+
+			rl.DrawTriangle(verticies[a], verticies[b], verticies[c], rl.YELLOW)
+		}
+
+		// verts: [dynamic]rl.Vector2
+
+		// for t, i in triangles {
+		// 	append(&verts, verticies[t])
+		// }
+
+		// rl.DrawTriangleStrip(raw_data(verts), i32(len(verts)), rl.Fade(rl.YELLOW, 0.5))
 
 		fps := fmt.ctprintf("FPS: %v", i32(1.0 / rl.GetFrameTime()))
 		rl.DrawText(fps, 20, 20, 20, rl.WHITE)
