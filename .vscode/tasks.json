@@ -1,0 +1,56 @@
+{
+    "version": "2.0.0",
+    "command": "",
+    "args": [],
+    "tasks": [
+        {
+            "label": "mkdir-debug",
+            "type": "shell",
+            "command": "cmd",
+            "args": [
+                "/C",
+                "if not exist .\\build\\debug mkdir .\\build\\debug"
+            ]
+        },
+        {
+            "label": "mkdir-release",
+            "type": "shell",
+            "command": "cmd",
+            "args": [
+                "/C",
+                "if not exist .\\build\\release mkdir .\\build\\release"
+            ]
+        },
+        {
+            "label": "build-debug",
+            "type": "shell",
+            "command": "odin build . -debug -out:build/debug/game-debug.exe -show-timings",
+            "group": "build"
+        },
+        {
+            "label": "Build Debug",
+            "dependsOn": [
+                "mkdir-debug",
+                "build-debug"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "build-release",
+            "type": "shell",
+            "command": "odin build . -out:build/release/game-release.exe -show-timings",
+            "group": "build"
+        },
+        {
+            "label": "Build Release",
+            "dependsOn": [
+                "mkdir-release",
+                "build-release"
+            ],
+            "group": "build"
+        }
+    ]
+}

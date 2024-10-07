@@ -1,0 +1,27 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run Odin",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "cmd.exe",
+            "args": [
+                "/C",
+                "odin run . -out:build/dev/game-dev.exe"
+            ],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal"
+        },
+        {
+            "type": "cppvsdbg",
+            "request": "launch",
+            "preLaunchTask": "Build Debug",
+            "name": "Debug",
+            "program": "${workspaceFolder}/build/debug/game-debug.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal"
+        }
+    ]
+}
