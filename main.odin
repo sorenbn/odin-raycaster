@@ -43,7 +43,7 @@ main :: proc() {
 		light_start := rl.GetMousePosition()
 		append(&verticies, light_start)
 
-		for i := 0; i < 90; i += 5 {
+		for i := 0; i < 360; i += 1 {
 			ray: ray = {
 				start  = light_start,
 				dir    = angle_to_direction(f32(i)),
@@ -80,10 +80,10 @@ main :: proc() {
 
 			if found_collision {
 				append(&verticies, closest_collision_point)
-				rl.DrawLineV(ray.start, closest_collision_point, rl.WHITE)
+				// rl.DrawLineV(ray.start, closest_collision_point, rl.WHITE)
 			} else {
 				append(&verticies, ray.start + ray.dir * ray.length)
-				rl.DrawLineV(ray.start, ray.start + ray.dir * ray.length, rl.WHITE)
+				// rl.DrawLineV(ray.start, ray.start + ray.dir * ray.length, rl.WHITE)
 			}
 		}
 
@@ -91,19 +91,27 @@ main :: proc() {
 			rl.DrawLineEx(w.start, w.end, WALL_THICKNESS, rl.BLUE)
 		}
 
-		for &v in verticies {
-			rl.DrawCircleV(v, 5.0, rl.RED)
+		// for v, i in verticies {
+		// 	rl.DrawCircleV(v, 5.0, rl.RED)
+		// 	index := fmt.ctprintf("%v", i)
+		// 	rl.DrawText(index, i32(v.x), i32(v.y), 20, rl.WHITE)
+		// }
+
+		for i := 0; i < len(verticies) - 2; i += 1 {
+			a := i32(0)
+			b := i32(i + 2)
+			c := i32(i + 1)
+			append(&triangles, a, b, c)
 		}
 
-		append(&triangles, 0, 2, 1)
-		append(&triangles, 0, 3, 2)
+		append(&triangles, i32(0), i32(1), i32(len(verticies) - 1))
 
 		for i := 0; i < len(triangles); i += 3 {
 			a := triangles[i]
 			b := triangles[i + 1]
 			c := triangles[i + 2]
 
-			rl.DrawTriangle(verticies[a], verticies[b], verticies[c], rl.YELLOW)
+			rl.DrawTriangle(verticies[a], verticies[b], verticies[c], rl.Fade(rl.YELLOW, 0.5))
 		}
 
 		// verts: [dynamic]rl.Vector2

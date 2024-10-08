@@ -1,0 +1,6 @@
+multi pointers:
+https://odin-lang.org/docs/overview/#multi-pointers
+https://github.com/search?q=language%3Aodin+DrawTriangleFan+&type=code
+https://github.com/rlmwang/odin-physics-game/blob/7e5b90db11d34388155fea091741121921092d2a/game/draw.odin#L46
+
+
