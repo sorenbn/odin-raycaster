@@ -3,6 +3,7 @@ package main
 import "core:fmt"
 import math "core:math"
 import rl "vendor:raylib"
+import rlgl "vendor:raylib/rlgl"
 
 WINDOW_WIDTH :: 1280
 WINDOW_HEIGHT :: 720
@@ -36,91 +37,93 @@ main :: proc() {
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.Color{25, 25, 25, 255})
 
-		clear(&rays)
-		clear(&verticies)
-		clear(&triangles)
+		v1 := rl.Vector2{500, 400}
+		v2 := rl.Vector2{1200, 400}
+		v3 := rl.Vector2{1200, 200}
 
-		light_start := rl.GetMousePosition()
-		append(&verticies, light_start)
+		rlgl.Begin(0x0004)
 
-		for i := 0; i < 360; i += 1 {
-			ray: ray = {
-				start  = light_start,
-				dir    = angle_to_direction(f32(i)),
-				length = RAY_LENGTH,
-			}
+		rlgl.Color4ub(253, 249, 0, 255)
+		rlgl.Vertex2f(v1.x, v1.y)
 
-			append(&rays, ray)
-		}
+		rlgl.Color4ub(253, 249, 0, 0)
+		rlgl.Vertex2f(v2.x, v2.y)
 
-		for ray in rays {
-			closest_collision_point: rl.Vector2
-			found_collision: bool = false
-			min_distance: f32 = ray.length
+		rlgl.Color4ub(253, 249, 0, 0)
+		rlgl.Vertex2f(v3.x, v3.y)
 
-			for w in walls {
-				collision_point: rl.Vector2
+		rlgl.End()
 
-				if rl.CheckCollisionLines(
-					ray.start,
-					ray.start + ray.dir * ray.length,
-					w.start,
-					w.end,
-					&collision_point,
-				) {
-					distance := rl.Vector2Distance(ray.start, collision_point)
+		// clear(&rays)
+		// clear(&verticies)
+		// clear(&triangles)
 
-					if distance < min_distance {
-						closest_collision_point = collision_point
-						min_distance = distance
-						found_collision = true
-					}
-				}
-			}
+		// light_start := rl.GetMousePosition()
+		// append(&verticies, light_start)
 
-			if found_collision {
-				append(&verticies, closest_collision_point)
-				// rl.DrawLineV(ray.start, closest_collision_point, rl.WHITE)
-			} else {
-				append(&verticies, ray.start + ray.dir * ray.length)
-				// rl.DrawLineV(ray.start, ray.start + ray.dir * ray.length, rl.WHITE)
-			}
-		}
+		// for i := 0; i < 360; i += 1 {
+		// 	ray: ray = {
+		// 		start  = light_start,
+		// 		dir    = angle_to_direction(f32(i)),
+		// 		length = RAY_LENGTH,
+		// 	}
 
-		for w in walls {
-			rl.DrawLineEx(w.start, w.end, WALL_THICKNESS, rl.BLUE)
-		}
-
-		// for v, i in verticies {
-		// 	rl.DrawCircleV(v, 5.0, rl.RED)
-		// 	index := fmt.ctprintf("%v", i)
-		// 	rl.DrawText(index, i32(v.x), i32(v.y), 20, rl.WHITE)
+		// 	append(&rays, ray)
 		// }
 
-		for i := 0; i < len(verticies) - 2; i += 1 {
-			a := i32(0)
-			b := i32(i + 2)
-			c := i32(i + 1)
-			append(&triangles, a, b, c)
-		}
+		// for ray in rays {
+		// 	closest_collision_point: rl.Vector2
+		// 	found_collision: bool = false
+		// 	min_distance: f32 = ray.length
 
-		append(&triangles, i32(0), i32(1), i32(len(verticies) - 1))
+		// 	for w in walls {
+		// 		collision_point: rl.Vector2
 
-		for i := 0; i < len(triangles); i += 3 {
-			a := triangles[i]
-			b := triangles[i + 1]
-			c := triangles[i + 2]
+		// 		if rl.CheckCollisionLines(
+		// 			ray.start,
+		// 			ray.start + ray.dir * ray.length,
+		// 			w.start,
+		// 			w.end,
+		// 			&collision_point,
+		// 		) {
+		// 			distance := rl.Vector2Distance(ray.start, collision_point)
 
-			rl.DrawTriangle(verticies[a], verticies[b], verticies[c], rl.Fade(rl.YELLOW, 0.5))
-		}
+		// 			if distance < min_distance {
+		// 				closest_collision_point = collision_point
+		// 				min_distance = distance
+		// 				found_collision = true
+		// 			}
+		// 		}
+		// 	}
 
-		// verts: [dynamic]rl.Vector2
-
-		// for t, i in triangles {
-		// 	append(&verts, verticies[t])
+		// 	if found_collision {
+		// 		append(&verticies, closest_collision_point)
+		// 		// rl.DrawLineV(ray.start, closest_collision_point, rl.WHITE)
+		// 	} else {
+		// 		append(&verticies, ray.start + ray.dir * ray.length)
+		// 		// rl.DrawLineV(ray.start, ray.start + ray.dir * ray.length, rl.WHITE)
+		// 	}
 		// }
 
-		// rl.DrawTriangleStrip(raw_data(verts), i32(len(verts)), rl.Fade(rl.YELLOW, 0.5))
+		// for w in walls {
+		// 	rl.DrawLineEx(w.start, w.end, WALL_THICKNESS, rl.BLUE)
+		// }
+
+		// for i := 0; i < len(verticies) - 2; i += 1 {
+		// 	a := i32(0)
+		// 	b := i32(i + 2)
+		// 	c := i32(i + 1)
+		// 	append(&triangles, a, b, c)
+		// }
+
+		// append(&triangles, i32(0), i32(1), i32(len(verticies) - 1))
+
+		// for i := 0; i < len(triangles); i += 3 {
+		// 	a := triangles[i]
+		// 	b := triangles[i + 1]
+		// 	c := triangles[i + 2]
+		// 	rl.DrawTriangle(verticies[a], verticies[b], verticies[c], rl.Fade(rl.YELLOW, 0.5))
+		// }
 
 		fps := fmt.ctprintf("FPS: %v", i32(1.0 / rl.GetFrameTime()))
 		rl.DrawText(fps, 20, 20, 20, rl.WHITE)
