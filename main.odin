@@ -7,8 +7,8 @@ import rlgl "vendor:raylib/rlgl"
 
 WINDOW_WIDTH :: 1280
 WINDOW_HEIGHT :: 720
-RAY_LENGTH :: 400
-WALL_THICKNESS :: 5
+RAY_LENGTH :: 800
+WALL_THICKNESS :: 2
 
 ray :: struct {
 	start:  rl.Vector2,
@@ -26,12 +26,17 @@ rays: [dynamic]ray
 verticies: [dynamic]rl.Vector2
 triangles: [dynamic]i32
 mask: rl.RenderTexture2D
+shader: rl.Shader
 
 main :: proc() {
 	rl.SetConfigFlags({.MSAA_4X_HINT, .VSYNC_HINT})
 	rl.InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Odin Raylib Template")
 
+	shader := rl.LoadShader("", "assets/shaders/test.fs")
+
 	mask := rl.LoadRenderTexture(WINDOW_WIDTH, WINDOW_HEIGHT)
+	defer rl.UnloadRenderTexture(mask)
+
 	rl.BeginTextureMode(mask)
 	rl.ClearBackground(rl.BLACK)
 	rl.EndTextureMode()
@@ -132,6 +137,12 @@ main :: proc() {
 
 		fps := fmt.ctprintf("FPS: %v", i32(1.0 / rl.GetFrameTime()))
 		rl.DrawText(fps, 20, 20, 20, rl.WHITE)
+
+		rl.BeginShaderMode(shader)
+
+		rl.DrawRectangleV({100, 100}, {300, 300}, rl.WHITE)
+
+		rl.EndShaderMode()
 
 		rl.EndDrawing()
 	}
