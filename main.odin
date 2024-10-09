@@ -37,93 +37,77 @@ main :: proc() {
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.Color{25, 25, 25, 255})
 
-		v1 := rl.Vector2{500, 400}
-		v2 := rl.Vector2{1200, 400}
-		v3 := rl.Vector2{1200, 200}
+		clear(&rays)
+		clear(&verticies)
+		clear(&triangles)
 
-		rlgl.Begin(0x0004)
+		light_start := rl.GetMousePosition()
+		append(&verticies, light_start)
 
-		rlgl.Color4ub(253, 249, 0, 255)
-		rlgl.Vertex2f(v1.x, v1.y)
+		for i := 0; i < 360; i += 1 {
+			ray: ray = {
+				start  = light_start,
+				dir    = angle_to_direction(f32(i)),
+				length = RAY_LENGTH,
+			}
 
-		rlgl.Color4ub(253, 249, 0, 0)
-		rlgl.Vertex2f(v2.x, v2.y)
+			append(&rays, ray)
+		}
 
-		rlgl.Color4ub(253, 249, 0, 0)
-		rlgl.Vertex2f(v3.x, v3.y)
+		for ray in rays {
+			closest_collision_point: rl.Vector2
+			found_collision: bool = false
+			min_distance: f32 = ray.length
 
-		rlgl.End()
+			for w in walls {
+				collision_point: rl.Vector2
 
-		// clear(&rays)
-		// clear(&verticies)
-		// clear(&triangles)
+				if rl.CheckCollisionLines(
+					ray.start,
+					ray.start + ray.dir * ray.length,
+					w.start,
+					w.end,
+					&collision_point,
+				) {
+					distance := rl.Vector2Distance(ray.start, collision_point)
 
-		// light_start := rl.GetMousePosition()
-		// append(&verticies, light_start)
+					if distance < min_distance {
+						closest_collision_point = collision_point
+						min_distance = distance
+						found_collision = true
+					}
+				}
+			}
 
-		// for i := 0; i < 360; i += 1 {
-		// 	ray: ray = {
-		// 		start  = light_start,
-		// 		dir    = angle_to_direction(f32(i)),
-		// 		length = RAY_LENGTH,
-		// 	}
+			if found_collision {
+				append(&verticies, closest_collision_point)
+				// rl.DrawLineV(ray.start, closest_collision_point, rl.WHITE)
+			} else {
+				append(&verticies, ray.start + ray.dir * ray.length)
+				// rl.DrawLineV(ray.start, ray.start + ray.dir * ray.length, rl.WHITE)
+			}
+		}
 
-		// 	append(&rays, ray)
-		// }
+		for w in walls {
+			rl.DrawLineEx(w.start, w.end, WALL_THICKNESS, rl.BLUE)
+		}
 
-		// for ray in rays {
-		// 	closest_collision_point: rl.Vector2
-		// 	found_collision: bool = false
-		// 	min_distance: f32 = ray.length
+		for i := 0; i < len(verticies) - 2; i += 1 {
+			a := i32(0)
+			b := i32(i + 2)
+			c := i32(i + 1)
+			append(&triangles, a, b, c)
+		}
 
-		// 	for w in walls {
-		// 		collision_point: rl.Vector2
+		append(&triangles, i32(0), i32(1), i32(len(verticies) - 1))
 
-		// 		if rl.CheckCollisionLines(
-		// 			ray.start,
-		// 			ray.start + ray.dir * ray.length,
-		// 			w.start,
-		// 			w.end,
-		// 			&collision_point,
-		// 		) {
-		// 			distance := rl.Vector2Distance(ray.start, collision_point)
-
-		// 			if distance < min_distance {
-		// 				closest_collision_point = collision_point
-		// 				min_distance = distance
-		// 				found_collision = true
-		// 			}
-		// 		}
-		// 	}
-
-		// 	if found_collision {
-		// 		append(&verticies, closest_collision_point)
-		// 		// rl.DrawLineV(ray.start, closest_collision_point, rl.WHITE)
-		// 	} else {
-		// 		append(&verticies, ray.start + ray.dir * ray.length)
-		// 		// rl.DrawLineV(ray.start, ray.start + ray.dir * ray.length, rl.WHITE)
-		// 	}
-		// }
-
-		// for w in walls {
-		// 	rl.DrawLineEx(w.start, w.end, WALL_THICKNESS, rl.BLUE)
-		// }
-
-		// for i := 0; i < len(verticies) - 2; i += 1 {
-		// 	a := i32(0)
-		// 	b := i32(i + 2)
-		// 	c := i32(i + 1)
-		// 	append(&triangles, a, b, c)
-		// }
-
-		// append(&triangles, i32(0), i32(1), i32(len(verticies) - 1))
-
-		// for i := 0; i < len(triangles); i += 3 {
-		// 	a := triangles[i]
-		// 	b := triangles[i + 1]
-		// 	c := triangles[i + 2]
-		// 	rl.DrawTriangle(verticies[a], verticies[b], verticies[c], rl.Fade(rl.YELLOW, 0.5))
-		// }
+		for i := 0; i < len(triangles); i += 3 {
+			a := triangles[i]
+			b := triangles[i + 1]
+			c := triangles[i + 2]
+			// rl.DrawTriangle(verticies[a], verticies[b], verticies[c], rl.Fade(rl.YELLOW, 0.5))
+			draw_rlgl_triangle(verticies[a], verticies[b], verticies[c], rl.YELLOW)
+		}
 
 		fps := fmt.ctprintf("FPS: %v", i32(1.0 / rl.GetFrameTime()))
 		rl.DrawText(fps, 20, 20, 20, rl.WHITE)
@@ -177,5 +161,26 @@ main :: proc() {
 	angle_to_direction :: proc(angle_in_deg: f32) -> rl.Vector2 {
 		angle_in_rad := math.to_radians_f32(angle_in_deg)
 		return rl.Vector2{math.cos(angle_in_rad), math.sin(angle_in_rad)}
+	}
+
+	draw_rlgl_triangle :: proc(center, edge1, edge2: rl.Vector2, color: rl.Color) {
+		rlgl.Begin(rlgl.TRIANGLES)
+
+		rlgl.Color4ub(color.r, color.g, color.b, 255)
+		rlgl.Vertex2f(center.x, center.y)
+
+		length_edge1 := rl.Vector2Distance(center, edge1)
+		normalized_length_edge1 := length_edge1 / RAY_LENGTH
+
+		length_edge2 := rl.Vector2Distance(center, edge2)
+		normalized_length_edge2 := length_edge2 / RAY_LENGTH
+
+		rlgl.Color4ub(color.r, color.g, color.b, u8(255 * normalized_length_edge1 * -1))
+		rlgl.Vertex2f(edge1.x, edge1.y)
+
+		rlgl.Color4ub(color.r, color.g, color.b, u8(255 * normalized_length_edge1 * -1))
+		rlgl.Vertex2f(edge2.x, edge2.y)
+
+		rlgl.End()
 	}
 }
