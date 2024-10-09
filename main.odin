@@ -7,7 +7,7 @@ import rlgl "vendor:raylib/rlgl"
 
 WINDOW_WIDTH :: 1280
 WINDOW_HEIGHT :: 720
-RAY_LENGTH :: 500
+RAY_LENGTH :: 400
 WALL_THICKNESS :: 5
 
 ray :: struct {
@@ -25,18 +25,20 @@ walls: [10]wall
 rays: [dynamic]ray
 verticies: [dynamic]rl.Vector2
 triangles: [dynamic]i32
+mask: rl.RenderTexture2D
 
 main :: proc() {
-
 	rl.SetConfigFlags({.MSAA_4X_HINT, .VSYNC_HINT})
 	rl.InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Odin Raylib Template")
+
+	mask := rl.LoadRenderTexture(WINDOW_WIDTH, WINDOW_HEIGHT)
+	rl.BeginTextureMode(mask)
+	rl.ClearBackground(rl.BLACK)
+	rl.EndTextureMode()
 
 	initialize_scene()
 
 	for (!rl.WindowShouldClose()) {
-		rl.BeginDrawing()
-		rl.ClearBackground(rl.Color{25, 25, 25, 255})
-
 		clear(&rays)
 		clear(&verticies)
 		clear(&triangles)
@@ -44,6 +46,7 @@ main :: proc() {
 		light_start := rl.GetMousePosition()
 		append(&verticies, light_start)
 
+		// cast rays in a circle around center
 		for i := 0; i < 360; i += 1 {
 			ray: ray = {
 				start  = light_start,
@@ -54,6 +57,7 @@ main :: proc() {
 			append(&rays, ray)
 		}
 
+		// check for wall collisions with rays
 		for ray in rays {
 			closest_collision_point: rl.Vector2
 			found_collision: bool = false
@@ -71,6 +75,7 @@ main :: proc() {
 				) {
 					distance := rl.Vector2Distance(ray.start, collision_point)
 
+					// find collision with the wall closest to the center of the ray
 					if distance < min_distance {
 						closest_collision_point = collision_point
 						min_distance = distance
@@ -79,19 +84,15 @@ main :: proc() {
 				}
 			}
 
+			// draw ray until hit collision
 			if found_collision {
 				append(&verticies, closest_collision_point)
-				// rl.DrawLineV(ray.start, closest_collision_point, rl.WHITE)
-			} else {
+			} else { 	// otherwise, draw ray at full length
 				append(&verticies, ray.start + ray.dir * ray.length)
-				// rl.DrawLineV(ray.start, ray.start + ray.dir * ray.length, rl.WHITE)
 			}
 		}
 
-		for w in walls {
-			rl.DrawLineEx(w.start, w.end, WALL_THICKNESS, rl.BLUE)
-		}
-
+		// set up triangles
 		for i := 0; i < len(verticies) - 2; i += 1 {
 			a := i32(0)
 			b := i32(i + 2)
@@ -99,15 +100,35 @@ main :: proc() {
 			append(&triangles, a, b, c)
 		}
 
+		// create last triangle to close the loop
 		append(&triangles, i32(0), i32(1), i32(len(verticies) - 1))
 
-		for i := 0; i < len(triangles); i += 3 {
-			a := triangles[i]
-			b := triangles[i + 1]
-			c := triangles[i + 2]
-			// rl.DrawTriangle(verticies[a], verticies[b], verticies[c], rl.Fade(rl.YELLOW, 0.5))
-			draw_rlgl_triangle(verticies[a], verticies[b], verticies[c], rl.YELLOW)
+		// draw to render texture mask
+		rl.BeginTextureMode(mask)
+		rl.ClearBackground(rl.Color{25, 25, 25, 255})
+
+		// draw walls
+		for w in walls {
+			rl.DrawLineEx(w.start, w.end, WALL_THICKNESS, rl.BLUE)
 		}
+
+		for i := 0; i < len(triangles); i += 3 {
+			a := triangles[i] // center
+			b := triangles[i + 1] // first edge
+			c := triangles[i + 2] // second edge
+			rl.DrawTriangle(verticies[a], verticies[b], verticies[c], rl.WHITE)
+		}
+
+		rl.EndTextureMode()
+
+		// draw render texture to the screen
+		rl.BeginDrawing()
+		rl.DrawTextureRec(
+			mask.texture,
+			{0, 0, f32(mask.texture.width), f32(-mask.texture.height)},
+			{0, 0},
+			rl.WHITE,
+		)
 
 		fps := fmt.ctprintf("FPS: %v", i32(1.0 / rl.GetFrameTime()))
 		rl.DrawText(fps, 20, 20, 20, rl.WHITE)
