@@ -3,4 +3,6 @@ https://odin-lang.org/docs/overview/#multi-pointers
 https://github.com/search?q=language%3Aodin+DrawTriangleFan+&type=code
 https://github.com/rlmwang/odin-physics-game/blob/7e5b90db11d34388155fea091741121921092d2a/game/draw.odin#L46
 
-
+Scouring through raylib examples:
+https://github.com/raysan5/raylib/blob/master/examples/shaders/shaders_texture_outline.c
+https://github.com/raysan5/raylib/blob/master/examples/shaders/resources/shaders/glsl330/color_mix.fs
