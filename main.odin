@@ -25,21 +25,28 @@ walls: [10]wall
 rays: [dynamic]ray
 verticies: [dynamic]rl.Vector2
 triangles: [dynamic]i32
+light_texture: rl.Texture2D
 mask: rl.RenderTexture2D
+screen: rl.RenderTexture2D
 shader: rl.Shader
 
 main :: proc() {
 	rl.SetConfigFlags({.MSAA_4X_HINT, .VSYNC_HINT})
 	rl.InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Odin Raylib Template")
 
-	shader := rl.LoadShader("", "assets/shaders/test.fs")
+	shader := rl.LoadShader("", "assets/shaders/screenspacemask.fs")
+	defer rl.UnloadShader(shader)
+
+	screen := rl.LoadRenderTexture(WINDOW_WIDTH, WINDOW_HEIGHT)
+	defer rl.UnloadRenderTexture(screen)
 
 	mask := rl.LoadRenderTexture(WINDOW_WIDTH, WINDOW_HEIGHT)
 	defer rl.UnloadRenderTexture(mask)
 
-	rl.BeginTextureMode(mask)
-	rl.ClearBackground(rl.BLACK)
-	rl.EndTextureMode()
+	light_texture := rl.LoadTexture("assets/textures/light-01.png")
+
+	screen_texture_location := rl.GetShaderLocation(shader, "texture0")
+	mask_texture_location := rl.GetShaderLocation(shader, "texture1")
 
 	initialize_scene()
 
@@ -108,14 +115,30 @@ main :: proc() {
 		// create last triangle to close the loop
 		append(&triangles, i32(0), i32(1), i32(len(verticies) - 1))
 
-		// draw to render texture mask
-		rl.BeginTextureMode(mask)
-		rl.ClearBackground(rl.Color{25, 25, 25, 255})
+		// render game
+		rl.BeginTextureMode(screen)
+		rl.ClearBackground(rl.BLACK)
 
 		// draw walls
 		for w in walls {
 			rl.DrawLineEx(w.start, w.end, WALL_THICKNESS, rl.BLUE)
 		}
+
+		// draw light sprite
+		rl.DrawTexturePro(
+			light_texture,
+			{0, 0, f32(light_texture.width), f32(light_texture.height)},
+			{light_start.x, light_start.y, 1024, 1024},
+			{f32(light_texture.width) * 0.5, f32(light_texture.height) * 0.5},
+			0,
+			rl.Fade(rl.YELLOW, 0.75),
+		)
+
+		rl.EndTextureMode()
+
+		// draw to render texture mask
+		rl.BeginTextureMode(mask)
+		rl.ClearBackground(rl.BLACK)
 
 		for i := 0; i < len(triangles); i += 3 {
 			a := triangles[i] // center
@@ -128,21 +151,24 @@ main :: proc() {
 
 		// draw render texture to the screen
 		rl.BeginDrawing()
+		rl.ClearBackground(rl.BLACK)
+
+		rl.BeginShaderMode(shader)
+
+		rl.SetShaderValueTexture(shader, screen_texture_location, screen.texture)
+		rl.SetShaderValueTexture(shader, mask_texture_location, mask.texture)
+
 		rl.DrawTextureRec(
-			mask.texture,
-			{0, 0, f32(mask.texture.width), f32(-mask.texture.height)},
+			screen.texture,
+			{0, 0, f32(screen.texture.width), f32(-screen.texture.height)},
 			{0, 0},
 			rl.WHITE,
 		)
 
+		rl.EndShaderMode()
+
 		fps := fmt.ctprintf("FPS: %v", i32(1.0 / rl.GetFrameTime()))
 		rl.DrawText(fps, 20, 20, 20, rl.WHITE)
-
-		rl.BeginShaderMode(shader)
-
-		rl.DrawRectangleV({100, 100}, {300, 300}, rl.WHITE)
-
-		rl.EndShaderMode()
 
 		rl.EndDrawing()
 	}
