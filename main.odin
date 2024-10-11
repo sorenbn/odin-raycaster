@@ -3,12 +3,11 @@ package main
 import "core:fmt"
 import math "core:math"
 import rl "vendor:raylib"
-import rlgl "vendor:raylib/rlgl"
 
 WINDOW_WIDTH :: 1280
 WINDOW_HEIGHT :: 720
 RAY_LENGTH :: 800
-WALL_THICKNESS :: 2
+WALL_THICKNESS :: 10
 
 ray :: struct {
 	start:  rl.Vector2,
@@ -48,20 +47,124 @@ main :: proc() {
 	screen_texture_location := rl.GetShaderLocation(shader, "texture0")
 	mask_texture_location := rl.GetShaderLocation(shader, "texture1")
 
-	initialize_scene()
+	initialize_level()
 
 	for (!rl.WindowShouldClose()) {
 		clear(&rays)
 		clear(&verticies)
 		clear(&triangles)
 
-		light_start := rl.GetMousePosition()
-		append(&verticies, light_start)
+		center := rl.GetMousePosition()
+		cast_rays(center)
+
+		// render game screen to render texture
+		rl.BeginTextureMode(screen)
+		rl.ClearBackground(rl.BLACK)
+
+		// draw walls
+		for w in walls {
+			rl.DrawLineEx(w.start, w.end, WALL_THICKNESS, rl.BLUE)
+		}
+
+		// draw light sprite
+		rl.DrawTexturePro(
+			light_texture,
+			{0, 0, f32(light_texture.width), f32(light_texture.height)},
+			{center.x, center.y, 1024, 1024},
+			{f32(light_texture.width) * 0.5, f32(light_texture.height) * 0.5},
+			0,
+			rl.Fade(rl.YELLOW, 0.75),
+		)
+
+		rl.EndTextureMode()
+
+		// draw mask render texture
+		rl.BeginTextureMode(mask)
+		rl.ClearBackground(rl.BLACK)
+
+		for i := 0; i < len(triangles); i += 3 {
+			a := triangles[i] // center
+			b := triangles[i + 1] // first edge
+			c := triangles[i + 2] // second edge
+			rl.DrawTriangle(verticies[a], verticies[b], verticies[c], rl.WHITE)
+		}
+
+		rl.EndTextureMode()
+
+		// draw final render texture to the screen with screen + mask applied.
+		rl.BeginDrawing()
+		rl.ClearBackground(rl.BLACK)
+
+		rl.BeginShaderMode(shader)
+
+		rl.SetShaderValueTexture(shader, screen_texture_location, screen.texture)
+		rl.SetShaderValueTexture(shader, mask_texture_location, mask.texture)
+
+		rl.DrawTextureRec(
+			screen.texture,
+			{0, 0, f32(screen.texture.width), f32(-screen.texture.height)},
+			{0, 0},
+			rl.WHITE,
+		)
+
+		rl.EndShaderMode()
+
+		fps := fmt.ctprintf("FPS: %v", i32(1.0 / rl.GetFrameTime()))
+		rl.DrawText(fps, 20, 20, 20, rl.WHITE)
+
+		rl.EndDrawing()
+	}
+
+	initialize_level :: proc() {
+		walls[0] = {
+			start = {0, 0},
+			end   = {WINDOW_WIDTH, 0},
+		}
+		walls[1] = {
+			start = {WINDOW_WIDTH, 0},
+			end   = {WINDOW_WIDTH, WINDOW_HEIGHT},
+		}
+		walls[2] = {
+			start = {WINDOW_WIDTH, WINDOW_HEIGHT},
+			end   = {0, WINDOW_HEIGHT},
+		}
+		walls[3] = {
+			start = {0, WINDOW_HEIGHT},
+			end   = {0, 0},
+		}
+		walls[4] = {
+			start = {400, 100},
+			end   = {600, 100},
+		}
+		walls[5] = {
+			start = {600, 100},
+			end   = {600, 300},
+		}
+		walls[6] = {
+			start = {600, 300},
+			end   = {400, 300},
+		}
+		walls[7] = {
+			start = {400, 300},
+			end   = {400, 100},
+		}
+		walls[8] = {
+			start = {800, 500},
+			end   = {800, 600},
+		}
+		walls[9] = {
+			start = {800, 500},
+			end   = {1000, 500},
+		}
+	}
+
+	cast_rays :: proc(center_point: rl.Vector2) {
+		append(&verticies, center_point)
 
 		// cast rays in a circle around center
 		for i := 0; i < 360; i += 1 {
 			ray: ray = {
-				start  = light_start,
+				start  = center_point,
 				dir    = angle_to_direction(f32(i)),
 				length = RAY_LENGTH,
 			}
@@ -114,131 +217,10 @@ main :: proc() {
 
 		// create last triangle to close the loop
 		append(&triangles, i32(0), i32(1), i32(len(verticies) - 1))
-
-		// render game
-		rl.BeginTextureMode(screen)
-		rl.ClearBackground(rl.BLACK)
-
-		// draw walls
-		for w in walls {
-			rl.DrawLineEx(w.start, w.end, WALL_THICKNESS, rl.BLUE)
-		}
-
-		// draw light sprite
-		rl.DrawTexturePro(
-			light_texture,
-			{0, 0, f32(light_texture.width), f32(light_texture.height)},
-			{light_start.x, light_start.y, 1024, 1024},
-			{f32(light_texture.width) * 0.5, f32(light_texture.height) * 0.5},
-			0,
-			rl.Fade(rl.YELLOW, 0.75),
-		)
-
-		rl.EndTextureMode()
-
-		// draw to render texture mask
-		rl.BeginTextureMode(mask)
-		rl.ClearBackground(rl.BLACK)
-
-		for i := 0; i < len(triangles); i += 3 {
-			a := triangles[i] // center
-			b := triangles[i + 1] // first edge
-			c := triangles[i + 2] // second edge
-			rl.DrawTriangle(verticies[a], verticies[b], verticies[c], rl.WHITE)
-		}
-
-		rl.EndTextureMode()
-
-		// draw render texture to the screen
-		rl.BeginDrawing()
-		rl.ClearBackground(rl.BLACK)
-
-		rl.BeginShaderMode(shader)
-
-		rl.SetShaderValueTexture(shader, screen_texture_location, screen.texture)
-		rl.SetShaderValueTexture(shader, mask_texture_location, mask.texture)
-
-		rl.DrawTextureRec(
-			screen.texture,
-			{0, 0, f32(screen.texture.width), f32(-screen.texture.height)},
-			{0, 0},
-			rl.WHITE,
-		)
-
-		rl.EndShaderMode()
-
-		fps := fmt.ctprintf("FPS: %v", i32(1.0 / rl.GetFrameTime()))
-		rl.DrawText(fps, 20, 20, 20, rl.WHITE)
-
-		rl.EndDrawing()
-	}
-
-	initialize_scene :: proc() {
-		walls[0] = {
-			start = {0, 0},
-			end   = {WINDOW_WIDTH, 0},
-		}
-		walls[1] = {
-			start = {WINDOW_WIDTH, 0},
-			end   = {WINDOW_WIDTH, WINDOW_HEIGHT},
-		}
-		walls[2] = {
-			start = {WINDOW_WIDTH, WINDOW_HEIGHT},
-			end   = {0, WINDOW_HEIGHT},
-		}
-		walls[3] = {
-			start = {0, WINDOW_HEIGHT},
-			end   = {0, 0},
-		}
-		walls[4] = {
-			start = {400, 100},
-			end   = {600, 100},
-		}
-		walls[5] = {
-			start = {600, 100},
-			end   = {600, 300},
-		}
-		walls[6] = {
-			start = {600, 300},
-			end   = {400, 300},
-		}
-		walls[7] = {
-			start = {400, 300},
-			end   = {400, 100},
-		}
-		walls[8] = {
-			start = {800, 500},
-			end   = {800, 600},
-		}
-		walls[9] = {
-			start = {800, 500},
-			end   = {1000, 500},
-		}
 	}
 
 	angle_to_direction :: proc(angle_in_deg: f32) -> rl.Vector2 {
 		angle_in_rad := math.to_radians_f32(angle_in_deg)
 		return rl.Vector2{math.cos(angle_in_rad), math.sin(angle_in_rad)}
-	}
-
-	draw_rlgl_triangle :: proc(center, edge1, edge2: rl.Vector2, color: rl.Color) {
-		rlgl.Begin(rlgl.TRIANGLES)
-
-		rlgl.Color4ub(color.r, color.g, color.b, 255)
-		rlgl.Vertex2f(center.x, center.y)
-
-		length_edge1 := rl.Vector2Distance(center, edge1)
-		normalized_length_edge1 := length_edge1 / RAY_LENGTH
-
-		length_edge2 := rl.Vector2Distance(center, edge2)
-		normalized_length_edge2 := length_edge2 / RAY_LENGTH
-
-		rlgl.Color4ub(color.r, color.g, color.b, u8(255 * normalized_length_edge1 * -1))
-		rlgl.Vertex2f(edge1.x, edge1.y)
-
-		rlgl.Color4ub(color.r, color.g, color.b, u8(255 * normalized_length_edge1 * -1))
-		rlgl.Vertex2f(edge2.x, edge2.y)
-
-		rlgl.End()
 	}
 }
