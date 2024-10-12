@@ -8,6 +8,7 @@ WINDOW_WIDTH :: 1280
 WINDOW_HEIGHT :: 720
 RAY_LENGTH :: 800
 WALL_THICKNESS :: 10
+DEBUG :: false
 
 ray :: struct {
 	start:  rl.Vector2,
@@ -20,7 +21,7 @@ wall :: struct {
 	end:   rl.Vector2,
 }
 
-walls: [10]wall
+walls: [dynamic]wall
 rays: [dynamic]ray
 verticies: [dynamic]rl.Vector2
 triangles: [dynamic]i32
@@ -112,50 +113,30 @@ main :: proc() {
 		fps := fmt.ctprintf("FPS: %v", i32(1.0 / rl.GetFrameTime()))
 		rl.DrawText(fps, 20, 20, 20, rl.WHITE)
 
+		if DEBUG {
+			debug_walls()
+		}
+
 		rl.EndDrawing()
 	}
 
 	initialize_level :: proc() {
-		walls[0] = {
-			start = {0, 0},
-			end   = {WINDOW_WIDTH, 0},
-		}
-		walls[1] = {
-			start = {WINDOW_WIDTH, 0},
-			end   = {WINDOW_WIDTH, WINDOW_HEIGHT},
-		}
-		walls[2] = {
-			start = {WINDOW_WIDTH, WINDOW_HEIGHT},
-			end   = {0, WINDOW_HEIGHT},
-		}
-		walls[3] = {
-			start = {0, WINDOW_HEIGHT},
-			end   = {0, 0},
-		}
-		walls[4] = {
-			start = {400, 100},
-			end   = {600, 100},
-		}
-		walls[5] = {
-			start = {600, 100},
-			end   = {600, 300},
-		}
-		walls[6] = {
-			start = {600, 300},
-			end   = {400, 300},
-		}
-		walls[7] = {
-			start = {400, 300},
-			end   = {400, 100},
-		}
-		walls[8] = {
-			start = {800, 500},
-			end   = {800, 600},
-		}
-		walls[9] = {
-			start = {800, 500},
-			end   = {1000, 500},
-		}
+		append(
+			&walls,
+			wall{start = {0, 0}, end = {WINDOW_WIDTH, 0}},
+			wall{start = {WINDOW_WIDTH, 0}, end = {WINDOW_WIDTH, WINDOW_HEIGHT}},
+			wall{start = {WINDOW_WIDTH, WINDOW_HEIGHT}, end = {0, WINDOW_HEIGHT}},
+			wall{start = {0, WINDOW_HEIGHT}, end = {0, 0}},
+			wall{start = {400, 100}, end = {600, 100}},
+			wall{start = {600, 100}, end = {600, 300}},
+			wall{start = {600, 300}, end = {400, 300}},
+			wall{start = {400, 300}, end = {400, 100}},
+			wall{start = {800, 500}, end = {800, 600}},
+			wall{start = {800, 500}, end = {1000, 500}},
+			wall{start = {1000, 500}, end = {1000, 300}},
+			wall{start = {200, 500}, end = {600, 500}},
+			wall{start = {600, 500}, end = {600, 600}},
+		)
 	}
 
 	cast_rays :: proc(center_point: rl.Vector2) {
@@ -222,5 +203,18 @@ main :: proc() {
 	angle_to_direction :: proc(angle_in_deg: f32) -> rl.Vector2 {
 		angle_in_rad := math.to_radians_f32(angle_in_deg)
 		return rl.Vector2{math.cos(angle_in_rad), math.sin(angle_in_rad)}
+	}
+
+	debug_walls :: proc() {
+		for w in walls {
+			rl.DrawCircleV(w.start, 5.0, rl.RED)
+			rl.DrawCircleV(w.end, 5.0, rl.RED)
+
+			startPos := fmt.ctprintf("x: %v, y: %v", i32(w.start.x), i32(w.start.y))
+			rl.DrawText(startPos, i32(w.start.x), i32(w.start.y), 10.0, rl.WHITE)
+
+			endPos := fmt.ctprintf("x: %v, y: %v", i32(w.end.x), i32(w.end.y))
+			rl.DrawText(endPos, i32(w.end.x), i32(w.end.y), 10.0, rl.WHITE)
+		}
 	}
 }
