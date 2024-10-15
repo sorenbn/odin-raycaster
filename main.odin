@@ -8,7 +8,7 @@ WINDOW_WIDTH :: 1280
 WINDOW_HEIGHT :: 720
 RAY_LENGTH :: 800
 WALL_THICKNESS :: 10
-DEBUG :: false
+DEBUG :: true
 
 ray :: struct {
 	start:  rl.Vector2,
@@ -34,16 +34,17 @@ main :: proc() {
 	rl.SetConfigFlags({.MSAA_4X_HINT, .VSYNC_HINT})
 	rl.InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Odin Raylib Template")
 
-	shader := rl.LoadShader("", "assets/shaders/screenspacemask.fs")
+	shader = rl.LoadShader("", "assets/shaders/screenspacemask.fs")
 	defer rl.UnloadShader(shader)
 
-	screen := rl.LoadRenderTexture(WINDOW_WIDTH, WINDOW_HEIGHT)
+	screen = rl.LoadRenderTexture(WINDOW_WIDTH, WINDOW_HEIGHT)
 	defer rl.UnloadRenderTexture(screen)
 
-	mask := rl.LoadRenderTexture(WINDOW_WIDTH, WINDOW_HEIGHT)
+	mask = rl.LoadRenderTexture(WINDOW_WIDTH, WINDOW_HEIGHT)
 	defer rl.UnloadRenderTexture(mask)
 
-	light_texture := rl.LoadTexture("assets/textures/light-01.png")
+	light_texture = rl.LoadTexture("assets/textures/light-01.png")
+	defer rl.UnloadTexture(light_texture)
 
 	screen_texture_location := rl.GetShaderLocation(shader, "texture0")
 	mask_texture_location := rl.GetShaderLocation(shader, "texture1")
@@ -74,7 +75,7 @@ main :: proc() {
 			{center.x, center.y, 1024, 1024},
 			{f32(light_texture.width) * 0.5, f32(light_texture.height) * 0.5},
 			0,
-			rl.Fade(rl.YELLOW, 0.75),
+			rl.Fade(rl.YELLOW, 0.5),
 		)
 
 		rl.EndTextureMode()
@@ -113,9 +114,7 @@ main :: proc() {
 		fps := fmt.ctprintf("FPS: %v", i32(1.0 / rl.GetFrameTime()))
 		rl.DrawText(fps, 20, 20, 20, rl.WHITE)
 
-		if DEBUG {
-			debug_walls()
-		}
+		if DEBUG {debug_walls()}
 
 		rl.EndDrawing()
 	}
