@@ -8,7 +8,7 @@ WINDOW_WIDTH :: 1280
 WINDOW_HEIGHT :: 720
 RAY_LENGTH :: 800
 WALL_THICKNESS :: 10
-DEBUG :: true
+DEBUG :: false
 
 ray :: struct {
 	start:  rl.Vector2,
