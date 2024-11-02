@@ -6,7 +6,7 @@ import rl "vendor:raylib"
 
 WINDOW_WIDTH :: 1280
 WINDOW_HEIGHT :: 720
-RAY_LENGTH :: 800
+RAY_LENGTH :: 1200
 WALL_THICKNESS :: 10
 DEBUG :: false
 
@@ -33,6 +33,7 @@ shader: rl.Shader
 main :: proc() {
 	rl.SetConfigFlags({.MSAA_4X_HINT, .VSYNC_HINT})
 	rl.InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Odin Raylib Template")
+	rl.DisableCursor()
 
 	shader = rl.LoadShader("", "assets/shaders/screenspacemask.fs")
 	defer rl.UnloadShader(shader)
@@ -72,10 +73,10 @@ main :: proc() {
 		rl.DrawTexturePro(
 			light_texture,
 			{0, 0, f32(light_texture.width), f32(light_texture.height)},
-			{center.x, center.y, 1024, 1024},
-			{f32(light_texture.width) * 0.5, f32(light_texture.height) * 0.5},
+			{center.x, center.y, 1024 * 2, 1024 * 2},
+			{f32(light_texture.width), f32(light_texture.height)},
 			0,
-			rl.Fade(rl.YELLOW, 0.5),
+			rl.Fade(rl.RED, 0.75),
 		)
 
 		rl.EndTextureMode()
